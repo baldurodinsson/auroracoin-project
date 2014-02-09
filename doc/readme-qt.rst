@@ -68,6 +68,28 @@ Mac OS X
 .. _`MacPorts`: http://www.macports.org/install.php
 
 
+Mac OS X 10.9
+--------
+
+- Download and install `MacPorts`_. You'll also need to install Apple's Xcode with the command line tools.
+
+- Execute the following commands in a terminal to get the dependencies:
+
+::
+
+	sudo port selfupdate
+	sudo port install boost db48 miniupnpc qt4-mac
+
+The execute the following:
+
+::
+
+   qmake
+   make
+
+.. _`MacPorts`: http://www.macports.org/install.php
+
+
 Build configuration options
 ============================
 
