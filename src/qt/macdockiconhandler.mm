@@ -3,8 +3,12 @@
 
 #include <QtGui/QMenu>
 #include <QtGui/QWidget>
+#include <QTemporaryFile>
+#include <QImageWriter>
 
+#if QT_VERSION < 0x050000
 extern void qt_mac_set_dock_menu(QMenu*);
+#endif
 
 #undef slots
 #include <Cocoa/Cocoa.h>
@@ -38,8 +42,9 @@ extern void qt_mac_set_dock_menu(QMenu*);
     Q_UNUSED(event)
     Q_UNUSED(replyEvent)
 
-    if (dockIconHandler)
-        dockIconHandler->handleDockIconClickEvent();
+    if (dockIconHandler){
+	dockIconHandler->handleDockIconClickEvent();
+    }
 }
 
 @end
@@ -51,14 +56,22 @@ MacDockIconHandler::MacDockIconHandler() : QObject()
 
     this->m_dummyWidget = new QWidget();
     this->m_dockMenu = new QMenu(this->m_dummyWidget);
+    this->setMainWindow(NULL);
+#if QT_VERSION < 0x05000
     qt_mac_set_dock_menu(this->m_dockMenu);
+#endif
     [pool release];
+}
+
+void MacDockIconHandler::setMainWindow(QMainWindow *window) {
+    this->mainWindow = window;
 }
 
 MacDockIconHandler::~MacDockIconHandler()
 {
     [this->m_dockIconClickEventHandler release];
     delete this->m_dummyWidget;
+    this->setMainWindow(NULL);
 }
 
 QMenu *MacDockIconHandler::dockMenu()
@@ -69,7 +82,7 @@ QMenu *MacDockIconHandler::dockMenu()
 void MacDockIconHandler::setIcon(const QIcon &icon)
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    NSImage *image;
+    NSImage *image = nil;
     if (icon.isNull())
         image = [[NSImage imageNamed:@"NSApplicationIcon"] retain];
     else {
@@ -95,5 +108,9 @@ MacDockIconHandler *MacDockIconHandler::instance()
 
 void MacDockIconHandler::handleDockIconClickEvent()
 {
+    if(this->mainWindow){
+	this->mainWindow->activateWindow();
+	this->mainWindow->show();
+    }
     emit this->dockIconClicked();
 }
