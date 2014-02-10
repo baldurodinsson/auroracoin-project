@@ -15,6 +15,8 @@ Auroracoin is a cryptocurrency for Iceland. It is based on litecoin and is 50% p
 
 ## Community
 
+Forums: http://forum.auroracoin.org/
+
 Irc: #aur on freenode
 
 http://www.reddit.com/r/auroracoin
