@@ -30,7 +30,6 @@ unsigned int nTransactionsUpdated = 0;
 
 map<uint256, CBlockIndex*> mapBlockIndex;
 uint256 hashGenesisBlock("0x2a8e100939494904af825b488596ddd536b3a96226ad02e0f7ab7ae472b27a8e");
-static CBigNum bnStartingDifficulty(~uint256(0) >> 28);
 static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20);
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
@@ -829,18 +828,22 @@ uint256 static GetOrphanRoot(const CBlock* pblock)
 
 int64 static GetBlockValue(int nHeight, int64 nFees)
 {
+	// Legacy
     int64 nSubsidy = 25 * COIN;
+	
+	if (nHeight > 5450)
+		nSubsidy = 12.5 * COIN;
 	
 	if (nHeight == 1)
 		nSubsidy = 10500000 * COIN;
 
-    nSubsidy >>= (nHeight / 210000); // Reward halves every 4 years 
+    nSubsidy >>= (nHeight / 420000); // Reward halves every 4 years 
 
     return nSubsidy + nFees;
 }
 
-static const int64 nTargetTimespan =  8 * 10 * 60; // AuroraCoin: Retarget every 8 blocks
-static const int64 nTargetSpacing = 10 * 60; // AuroraCoin: Blocks every 10 minutes
+static const int64 nTargetTimespan =  8 * 10 * 60; // Legacy
+static const int64 nTargetSpacing = 10 * 60; // Legacy
 static const int64 nInterval = nTargetTimespan / nTargetSpacing;
 
 //
@@ -868,6 +871,64 @@ unsigned int ComputeMinWork(unsigned int nBase, int64 nTime)
     return bnResult.GetCompact();
 }
 
+unsigned int static GravityWell(const CBlockIndex* pindexLast, const CBlock *pblock, uint64 TargetBlocksSpacingSeconds, uint64 PastBlocksMin, uint64 PastBlocksMax) {
+
+	const CBlockIndex  *BlockLastSolved				= pindexLast;
+	const CBlockIndex  *BlockReading				= pindexLast;
+	uint64				PastBlocksMass				= 0;
+	int64				PastRateActualSeconds		= 0;
+	int64				PastRateTargetSeconds		= 0;
+	double				PastRateAdjustmentRatio		= double(1);
+	CBigNum				PastDifficultyAverage;
+	CBigNum				PastDifficultyAveragePrev;
+	double				EventHorizonDeviation;
+	double				EventHorizonDeviationFast;
+	double				EventHorizonDeviationSlow;
+	
+    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || (uint64)BlockLastSolved->nHeight < PastBlocksMin) { return bnProofOfWorkLimit.GetCompact(); }
+	
+	for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
+		if (PastBlocksMax > 0 && i > PastBlocksMax) { break; }
+		PastBlocksMass++;
+		
+		if (i == 1)	{ PastDifficultyAverage.SetCompact(BlockReading->nBits); }
+		else		{ PastDifficultyAverage = ((CBigNum().SetCompact(BlockReading->nBits) - PastDifficultyAveragePrev) / i) + PastDifficultyAveragePrev; }
+		PastDifficultyAveragePrev = PastDifficultyAverage;
+		
+		PastRateActualSeconds			= BlockLastSolved->GetBlockTime() - BlockReading->GetBlockTime();
+		PastRateTargetSeconds			= TargetBlocksSpacingSeconds * PastBlocksMass;
+		PastRateAdjustmentRatio			= double(1);
+		if (PastRateActualSeconds < 0) { PastRateActualSeconds = 0; }
+		if (PastRateActualSeconds != 0 && PastRateTargetSeconds != 0) {
+		PastRateAdjustmentRatio			= double(PastRateTargetSeconds) / double(PastRateActualSeconds);
+		}
+		EventHorizonDeviation			= 1 + (0.7084 * pow((double(PastBlocksMass)/double(144)), -1.228));
+		EventHorizonDeviationFast		= EventHorizonDeviation;
+		EventHorizonDeviationSlow		= 1 / EventHorizonDeviation;
+		
+		if (PastBlocksMass >= PastBlocksMin) {
+			if ((PastRateAdjustmentRatio <= EventHorizonDeviationSlow) || (PastRateAdjustmentRatio >= EventHorizonDeviationFast)) { assert(BlockReading); break; }
+		}
+		if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
+		BlockReading = BlockReading->pprev;
+	}
+	
+	CBigNum bnNew(PastDifficultyAverage);
+	if (PastRateActualSeconds != 0 && PastRateTargetSeconds != 0) {
+		bnNew *= PastRateActualSeconds;
+		bnNew /= PastRateTargetSeconds;
+	}
+    if (bnNew > bnProofOfWorkLimit) { bnNew = bnProofOfWorkLimit; }
+	
+    /// debug print
+    printf("Difficulty Retarget - Gravity Well\n");
+    printf("PastRateAdjustmentRatio = %g\n", PastRateAdjustmentRatio);
+    printf("Before: %08x  %s\n", BlockLastSolved->nBits, CBigNum().SetCompact(BlockLastSolved->nBits).getuint256().ToString().c_str());
+    printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
+	
+	return bnNew.GetCompact();
+}
+
 unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlock *pblock)
 {
     unsigned int nProofOfWorkLimit = bnProofOfWorkLimit.GetCompact();
@@ -878,8 +939,19 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
 		
 	if (pindexLast->nHeight+1 < 135)
 		return nProofOfWorkLimit;
-	else if (pindexLast->nHeight+1 == 121)
-		return bnStartingDifficulty.GetCompact();
+		
+	// Gravity well after block 5400
+	if (pindexLast->nHeight+1 > 5400)
+	{
+		static const int64	BlocksTargetSpacing			= 5 * 60; // 5 minutes 
+		unsigned int		TimeDaySeconds				= 60 * 60 * 24;
+		int64				PastSecondsMin				= TimeDaySeconds * 0.5;
+		int64				PastSecondsMax				= TimeDaySeconds * 14;
+		uint64				PastBlocksMin				= PastSecondsMin / BlocksTargetSpacing;
+		uint64				PastBlocksMax				= PastSecondsMax / BlocksTargetSpacing;	
+	
+		return GravityWell(pindexLast, pblock, BlocksTargetSpacing, PastBlocksMin, PastBlocksMax);
+	}
 
     // Only change once per interval
     if ((pindexLast->nHeight+1) % nInterval != 0)
