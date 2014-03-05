@@ -940,8 +940,8 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
 	if (pindexLast->nHeight+1 < 135)
 		return nProofOfWorkLimit;
 		
-	// Gravity well after block 5400
-	if (pindexLast->nHeight+1 > 5400)
+	// Gravity well after block 4130
+	if (pindexLast->nHeight+1 > 4130)
 	{
 		static const int64	BlocksTargetSpacing			= 5 * 60; // 5 minutes 
 		unsigned int		TimeDaySeconds				= 60 * 60 * 24;
