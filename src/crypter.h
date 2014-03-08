@@ -1,6 +1,4 @@
 // Copyright (c) 2009-2012 The Bitcoin Developers
-// Copyright (c) 2011-2012 Litecoin Developers
-// Copyright (c) 2013 AuroraCoin Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef __CRYPTER_H__
@@ -78,25 +76,32 @@ public:
 
     void CleanKey()
     {
-        memset(&chKey, 0, sizeof chKey);
-        memset(&chIV, 0, sizeof chIV);
-        munlock(&chKey, sizeof chKey);
-        munlock(&chIV, sizeof chIV);
+        OPENSSL_cleanse(chKey, sizeof(chKey));
+        OPENSSL_cleanse(chIV, sizeof(chIV));
         fKeySet = false;
     }
 
     CCrypter()
     {
         fKeySet = false;
+
+        // Try to keep the key data out of swap (and be a bit over-careful to keep the IV that we don't even use out of swap)
+        // Note that this does nothing about suspend-to-disk (which will put all our key data on disk)
+        // Note as well that at no point in this program is any attempt made to prevent stealing of keys by reading the memory of the running process.
+        LockedPageManager::instance.LockRange(&chKey[0], sizeof chKey);
+        LockedPageManager::instance.LockRange(&chIV[0], sizeof chIV);
     }
 
     ~CCrypter()
     {
         CleanKey();
+
+        LockedPageManager::instance.UnlockRange(&chKey[0], sizeof chKey);
+        LockedPageManager::instance.UnlockRange(&chIV[0], sizeof chIV);
     }
 };
 
-bool EncryptSecret(CKeyingMaterial& vMasterKey, const CSecret &vchPlaintext, const uint256& nIV, std::vector<unsigned char> &vchCiphertext);
-bool DecryptSecret(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char> &vchCiphertext, const uint256& nIV, CSecret &vchPlaintext);
+bool EncryptSecret(const CKeyingMaterial& vMasterKey, const CKeyingMaterial &vchPlaintext, const uint256& nIV, std::vector<unsigned char> &vchCiphertext);
+bool DecryptSecret(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char>& vchCiphertext, const uint256& nIV, CKeyingMaterial& vchPlaintext);
 
 #endif

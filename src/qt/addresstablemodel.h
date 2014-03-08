@@ -14,13 +14,14 @@ class WalletModel;
 class AddressTableModel : public QAbstractTableModel
 {
     Q_OBJECT
+
 public:
     explicit AddressTableModel(CWallet *wallet, WalletModel *parent = 0);
     ~AddressTableModel();
 
     enum ColumnIndex {
         Label = 0,   /**< User specified label */
-        Address = 1  /**< Bitcoin address */
+        Address = 1  /**< Auroracoin address */
     };
 
     enum RoleIndex {
@@ -29,7 +30,8 @@ public:
 
     /** Return status of edit/insert operation */
     enum EditStatus {
-        OK,
+        OK,                     /**< Everything ok */
+        NO_CHANGES,             /**< No changes were made during edit operation */
         INVALID_ADDRESS,   /**< Unparseable address */
         DUPLICATE_ADDRESS,  /**< Address already in address book */
         WALLET_UNLOCK_FAILURE, /**< Wallet could not be unlocked to create new receiving address */

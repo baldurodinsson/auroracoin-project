@@ -5,7 +5,7 @@ SetCompressor /SOLID lzma
 
 # General Symbol Definitions
 !define REGKEY "SOFTWARE\$(^Name)"
-!define VERSION 0.6.3
+!define VERSION 0.8.6.2
 !define COMPANY "Litecoin project"
 !define URL http://www.litecoin.org/
 
@@ -45,13 +45,13 @@ Var StartMenuGroup
 !insertmacro MUI_LANGUAGE English
 
 # Installer attributes
-OutFile litecoin-0.6.3-win32-setup.exe
+OutFile litecoin-0.8.6.2-win32-setup.exe
 InstallDir $PROGRAMFILES\Litecoin
 CRCCheck on
 XPStyle on
 BrandingText " "
 ShowInstDetails show
-VIProductVersion 0.6.3.0
+VIProductVersion 0.8.6.2
 VIAddVersionKey ProductName Litecoin
 VIAddVersionKey ProductVersion "${VERSION}"
 VIAddVersionKey CompanyName "${COMPANY}"
@@ -67,7 +67,7 @@ Section -Main SEC0000
     SetOutPath $INSTDIR
     SetOverwrite on
     File ../release/litecoin-qt.exe
-    File /oname=license.txt ../COPYING
+    File /oname=COPYING.txt ../COPYING
     File /oname=readme.txt ../doc/README_windows.txt
     SetOutPath $INSTDIR\daemon
     File ../src/litecoind.exe
@@ -98,10 +98,10 @@ Section -post SEC0001
     WriteRegStr HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$(^Name)" UninstallString $INSTDIR\uninstall.exe
     WriteRegDWORD HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$(^Name)" NoModify 1
     WriteRegDWORD HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$(^Name)" NoRepair 1
-    WriteRegStr HKCR "litceoin" "URL Protocol" ""
-    WriteRegStr HKCR "litecoin" "" "URL:Bitcoin"
+    WriteRegStr HKCR "litecoin" "URL Protocol" ""
+    WriteRegStr HKCR "litecoin" "" "URL:Litecoin"
     WriteRegStr HKCR "litecoin\DefaultIcon" "" $INSTDIR\litecoin-qt.exe
-    WriteRegStr HKCR "litecoin\shell\open\command" "" '"$INSTDIR\litecoin-qt.exe" "$$1"'
+    WriteRegStr HKCR "litecoin\shell\open\command" "" '"$INSTDIR\litecoin-qt.exe" "%1"'
 SectionEnd
 
 # Macro for selecting uninstaller sections
@@ -120,7 +120,7 @@ done${UNSECTION_ID}:
 # Uninstaller sections
 Section /o -un.Main UNSEC0000
     Delete /REBOOTOK $INSTDIR\litecoin-qt.exe
-    Delete /REBOOTOK $INSTDIR\license.txt
+    Delete /REBOOTOK $INSTDIR\COPYING.txt
     Delete /REBOOTOK $INSTDIR\readme.txt
     RMDir /r /REBOOTOK $INSTDIR\daemon
     RMDir /r /REBOOTOK $INSTDIR\src

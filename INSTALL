@@ -1,9 +1,9 @@
-Building AuroraCoin
+Building Auroracoin
 
-See doc/readme-qt.rst for instructions on building AuroraCoin-QT,
+See doc/readme-qt.rst for instructions on building Auroracoin-QT,
 the intended-for-end-users, nice-graphical-interface, reference
-implementation of AuroraCoin.
+implementation of Auroracoin.
 
-See doc/build-*.txt for instructions on building AuroraCoind,
+See doc/build-*.txt for instructions on building auroracoind,
 the intended-for-services, no-graphical-interface, reference
 implementation of Litecoin.

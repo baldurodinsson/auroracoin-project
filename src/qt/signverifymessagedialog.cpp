@@ -10,10 +10,10 @@
 #include "walletmodel.h"
 #include "wallet.h"
 
+#include <QClipboard>
+
 #include <string>
 #include <vector>
-
-#include <QClipboard>
 
 SignVerifyMessageDialog::SignVerifyMessageDialog(QWidget *parent) :
     QDialog(parent),
@@ -24,11 +24,11 @@ SignVerifyMessageDialog::SignVerifyMessageDialog(QWidget *parent) :
 
 #if (QT_VERSION >= 0x040700)
     /* Do not move this to the XML file, Qt before 4.7 will choke on it */
-    ui->addressIn_SM->setPlaceholderText(tr("Enter an AuroraCoin address (e.g. ANS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)"));
+    ui->addressIn_SM->setPlaceholderText(tr("Enter a Auroracoin address (e.g. Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2)"));
     ui->signatureOut_SM->setPlaceholderText(tr("Click \"Sign Message\" to generate signature"));
 
-    ui->addressIn_VM->setPlaceholderText(tr("Enter an AuroraCoin address (e.g. ANS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)"));
-    ui->signatureIn_VM->setPlaceholderText(tr("Enter AuroraCoin signature"));
+    ui->addressIn_VM->setPlaceholderText(tr("Enter a Auroracoin address (e.g. Ler4HNAEfwYhBmGXcFP2Po1NpRUEiK8km2)"));
+    ui->signatureIn_VM->setPlaceholderText(tr("Enter Auroracoin signature"));
 #endif
 
     GUIUtil::setupAddressWidget(ui->addressIn_SM, this);
@@ -55,13 +55,13 @@ void SignVerifyMessageDialog::setModel(WalletModel *model)
     this->model = model;
 }
 
-void SignVerifyMessageDialog::setAddress_SM(QString address)
+void SignVerifyMessageDialog::setAddress_SM(const QString &address)
 {
     ui->addressIn_SM->setText(address);
     ui->messageIn_SM->setFocus();
 }
 
-void SignVerifyMessageDialog::setAddress_VM(QString address)
+void SignVerifyMessageDialog::setAddress_VM(const QString &address)
 {
     ui->addressIn_VM->setText(address);
     ui->messageIn_VM->setFocus();
@@ -126,7 +126,7 @@ void SignVerifyMessageDialog::on_signMessageButton_SM_clicked()
     if (!ctx.isValid())
     {
         ui->statusLabel_SM->setStyleSheet("QLabel { color: red; }");
-        ui->statusLabel_SM->setText(tr("Wallet unlock was canceled."));
+        ui->statusLabel_SM->setText(tr("Wallet unlock was cancelled."));
         return;
     }
 
@@ -218,8 +218,8 @@ void SignVerifyMessageDialog::on_verifyMessageButton_VM_clicked()
     ss << strMessageMagic;
     ss << ui->messageIn_VM->document()->toPlainText().toStdString();
 
-    CKey key;
-    if (!key.SetCompactSignature(Hash(ss.begin(), ss.end()), vchSig))
+    CPubKey pubkey;
+    if (!pubkey.RecoverCompact(Hash(ss.begin(), ss.end()), vchSig))
     {
         ui->signatureIn_VM->setValid(false);
         ui->statusLabel_VM->setStyleSheet("QLabel { color: red; }");
@@ -227,7 +227,7 @@ void SignVerifyMessageDialog::on_verifyMessageButton_VM_clicked()
         return;
     }
 
-    if (!(CBitcoinAddress(key.GetPubKey().GetID()) == addr))
+    if (!(CBitcoinAddress(pubkey.GetID()) == addr))
     {
         ui->statusLabel_VM->setStyleSheet("QLabel { color: red; }");
         ui->statusLabel_VM->setText(QString("<nobr>") + tr("Message verification failed.") + QString("</nobr>"));

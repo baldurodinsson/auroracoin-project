@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>729</width>
-    <height>136</height>
+    <height>150</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -52,23 +52,6 @@
    <item row="5" column="1">
     <widget class="BitcoinAmountField" name="payAmount"/>
    </item>
-   <item row="4" column="1">
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <property name="spacing">
-      <number>0</number>
-     </property>
-     <item>
-      <widget class="QValidatedLineEdit" name="addAsLabel">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="toolTip">
-        <string>Enter a label for this address to add it to your address book</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
    <item row="4" column="0">
     <widget class="QLabel" name="label_4">
      <property name="text">
@@ -92,15 +75,12 @@
        <property name="toolTip">
         <string>The address to send the payment to  (e.g. ANS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)</string>
        </property>
-       <property name="maxLength">
-        <number>34</number>
-       </property>
       </widget>
      </item>
      <item>
       <widget class="QToolButton" name="addressBookButton">
        <property name="toolTip">
-        <string>Choose address from address book</string>
+         <string>Choose previously used address</string>
        </property>
        <property name="text">
         <string/>
@@ -134,7 +114,7 @@
      <item>
       <widget class="QToolButton" name="deleteButton">
        <property name="toolTip">
-        <string>Remove this recipient</string>
+         <string>Remove this entry</string>
        </property>
        <property name="text">
         <string/>
@@ -147,8 +127,15 @@
      </item>
     </layout>
    </item>
-  </layout>
- </widget>
+   <item row="4" column="1">
+    <widget class="QValidatedLineEdit" name="addAsLabel">
+        <property name="toolTip">
+      <string>Enter a label for this address to add it to your address book</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
  <customwidgets>
   <customwidget>
    <class>BitcoinAmountField</class>

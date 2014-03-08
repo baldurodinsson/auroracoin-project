@@ -20,12 +20,9 @@
 #include <QLineEdit>
 #include <QTableView>
 #include <QHeaderView>
-#include <QPushButton>
 #include <QMessageBox>
 #include <QPoint>
 #include <QMenu>
-#include <QApplication>
-#include <QClipboard>
 #include <QLabel>
 #include <QDateTimeEdit>
 
@@ -38,7 +35,7 @@ TransactionView::TransactionView(QWidget *parent) :
 
     QHBoxLayout *hlayout = new QHBoxLayout();
     hlayout->setContentsMargins(0,0,0,0);
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
     hlayout->setSpacing(5);
     hlayout->addSpacing(26);
 #else
@@ -47,7 +44,7 @@ TransactionView::TransactionView(QWidget *parent) :
 #endif
 
     dateWidget = new QComboBox(this);
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
     dateWidget->setFixedWidth(121);
 #else
     dateWidget->setFixedWidth(120);
@@ -62,7 +59,7 @@ TransactionView::TransactionView(QWidget *parent) :
     hlayout->addWidget(dateWidget);
 
     typeWidget = new QComboBox(this);
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
     typeWidget->setFixedWidth(121);
 #else
     typeWidget->setFixedWidth(120);
@@ -91,7 +88,7 @@ TransactionView::TransactionView(QWidget *parent) :
     /* Do not move this to the XML file, Qt before 4.7 will choke on it */
     amountWidget->setPlaceholderText(tr("Min amount"));
 #endif
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
     amountWidget->setFixedWidth(97);
 #else
     amountWidget->setFixedWidth(100);
@@ -110,7 +107,7 @@ TransactionView::TransactionView(QWidget *parent) :
     vlayout->setSpacing(0);
     int width = view->verticalScrollBar()->sizeHint().width();
     // Cover scroll bar width with spacing
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
     hlayout->addSpacing(width+2);
 #else
     hlayout->addSpacing(width);
@@ -126,6 +123,7 @@ TransactionView::TransactionView(QWidget *parent) :
     QAction *copyAddressAction = new QAction(tr("Copy address"), this);
     QAction *copyLabelAction = new QAction(tr("Copy label"), this);
     QAction *copyAmountAction = new QAction(tr("Copy amount"), this);
+    QAction *copyTxIDAction = new QAction(tr("Copy transaction ID"), this);
     QAction *editLabelAction = new QAction(tr("Edit label"), this);
     QAction *showDetailsAction = new QAction(tr("Show transaction details"), this);
 
@@ -133,6 +131,7 @@ TransactionView::TransactionView(QWidget *parent) :
     contextMenu->addAction(copyAddressAction);
     contextMenu->addAction(copyLabelAction);
     contextMenu->addAction(copyAmountAction);
+    contextMenu->addAction(copyTxIDAction);
     contextMenu->addAction(editLabelAction);
     contextMenu->addAction(showDetailsAction);
 
@@ -148,6 +147,7 @@ TransactionView::TransactionView(QWidget *parent) :
     connect(copyAddressAction, SIGNAL(triggered()), this, SLOT(copyAddress()));
     connect(copyLabelAction, SIGNAL(triggered()), this, SLOT(copyLabel()));
     connect(copyAmountAction, SIGNAL(triggered()), this, SLOT(copyAmount()));
+    connect(copyTxIDAction, SIGNAL(triggered()), this, SLOT(copyTxID()));
     connect(editLabelAction, SIGNAL(triggered()), this, SLOT(editLabel()));
     connect(showDetailsAction, SIGNAL(triggered()), this, SLOT(showDetails()));
 }
@@ -173,16 +173,15 @@ void TransactionView::setModel(WalletModel *model)
         transactionView->sortByColumn(TransactionTableModel::Status, Qt::DescendingOrder);
         transactionView->verticalHeader()->hide();
 
-        transactionView->horizontalHeader()->resizeSection(
-                TransactionTableModel::Status, 23);
-        transactionView->horizontalHeader()->resizeSection(
-                TransactionTableModel::Date, 120);
-        transactionView->horizontalHeader()->resizeSection(
-                TransactionTableModel::Type, 120);
-        transactionView->horizontalHeader()->setResizeMode(
-                TransactionTableModel::ToAddress, QHeaderView::Stretch);
-        transactionView->horizontalHeader()->resizeSection(
-                TransactionTableModel::Amount, 100);
+        transactionView->horizontalHeader()->resizeSection(TransactionTableModel::Status, 23);
+        transactionView->horizontalHeader()->resizeSection(TransactionTableModel::Date, 120);
+        transactionView->horizontalHeader()->resizeSection(TransactionTableModel::Type, 120);
+#if QT_VERSION < 0x050000
+        transactionView->horizontalHeader()->setResizeMode(TransactionTableModel::ToAddress, QHeaderView::Stretch);
+#else
+        transactionView->horizontalHeader()->setSectionResizeMode(TransactionTableModel::ToAddress, QHeaderView::Stretch);
+#endif
+        transactionView->horizontalHeader()->resizeSection(TransactionTableModel::Amount, 100);
     }
 }
 
@@ -205,7 +204,7 @@ void TransactionView::chooseDate(int idx)
                 TransactionFilterProxy::MAX_DATE);
         break;
     case ThisWeek: {
-        // Find last monday
+        // Find last Monday
         QDate startOfWeek = current.addDays(-(current.dayOfWeek()-1));
         transactionProxyModel->setDateRange(
                 QDateTime(startOfWeek),
@@ -315,6 +314,11 @@ void TransactionView::copyLabel()
 void TransactionView::copyAmount()
 {
     GUIUtil::copyEntryData(transactionView, 0, TransactionTableModel::FormattedAmountRole);
+}
+
+void TransactionView::copyTxID()
+{
+    GUIUtil::copyEntryData(transactionView, 0, TransactionTableModel::TxIDRole);
 }
 
 void TransactionView::editLabel()
