@@ -1,4 +1,4 @@
-<RCC>
+<!DOCTYPE RCC><RCC version="1.0">
     <qresource prefix="/icons">
         <file alias="bitcoin">res/icons/bitcoin.png</file>
         <file alias="address-book">res/icons/address-book.png</file>
@@ -10,8 +10,6 @@
         <file alias="connect_2">res/icons/connect2_16.png</file>
         <file alias="connect_3">res/icons/connect3_16.png</file>
         <file alias="connect_4">res/icons/connect4_16.png</file>
-        <file alias="mining_active">res/icons/mining_active.png</file>
-        <file alias="mining_inactive">res/icons/mining_inactive.png</file>
         <file alias="transaction_0">res/icons/transaction0.png</file>
         <file alias="transaction_confirmed">res/icons/transaction2.png</file>
         <file alias="transaction_1">res/icons/clock1.png</file>
@@ -29,7 +27,6 @@
         <file alias="edit">res/icons/edit.png</file>
         <file alias="history">res/icons/history.png</file>
         <file alias="overview">res/icons/overview.png</file>
-        <file alias="mining">res/icons/mining.png</file>
         <file alias="export">res/icons/export.png</file>
         <file alias="synced">res/icons/synced.png</file>
         <file alias="remove">res/icons/remove.png</file>
@@ -46,19 +43,26 @@
     </qresource>
     <qresource prefix="/images">
         <file alias="about">res/images/about.png</file>
-        <file alias="splash">res/images/splash2.jpg</file>
+        <file alias="splash">res/images/splash.png</file>
+        <file alias="splash_testnet">res/images/splash_testnet.png</file>
     </qresource>
     <qresource prefix="/movies">
         <file alias="update_spinner">res/movies/update_spinner.mng</file>
     </qresource>
     <qresource prefix="/translations">
+        <file alias="af_ZA">locale/bitcoin_af_ZA.qm</file>
+        <file alias="ar">locale/bitcoin_ar.qm</file>
         <file alias="bg">locale/bitcoin_bg.qm</file>
+        <file alias="bs">locale/bitcoin_bs.ts</file>
+        <file alias="ca">locale/bitcoin_ca.ts</file>
         <file alias="ca_ES">locale/bitcoin_ca_ES.qm</file>
         <file alias="cs">locale/bitcoin_cs.qm</file>
+        <file alias="cy">locale/bitcoin_cy.ts</file>
         <file alias="da">locale/bitcoin_da.qm</file>
         <file alias="de">locale/bitcoin_de.qm</file>
         <file alias="el_GR">locale/bitcoin_el_GR.qm</file>
         <file alias="en">locale/bitcoin_en.qm</file>
+        <file alias="eo">locale/bitcoin_eo.ts</file>
         <file alias="es">locale/bitcoin_es.qm</file>
         <file alias="es_CL">locale/bitcoin_es_CL.qm</file>
         <file alias="et">locale/bitcoin_et.qm</file>
@@ -68,11 +72,16 @@
         <file alias="fi">locale/bitcoin_fi.qm</file>
         <file alias="fr">locale/bitcoin_fr.qm</file>
         <file alias="fr_CA">locale/bitcoin_fr_CA.qm</file>
+        <file alias="gu_IN">locale/bitcoin_gu_IN.ts</file>
         <file alias="he">locale/bitcoin_he.qm</file>
+        <file alias="hi_IN">locale/bitcoin_hi_IN.ts</file>
         <file alias="hr">locale/bitcoin_hr.qm</file>
         <file alias="hu">locale/bitcoin_hu.qm</file>
         <file alias="it">locale/bitcoin_it.qm</file>
+        <file alias="ja">locale/bitcoin_ja.ts</file>
+        <file alias="la">locale/bitcoin_la.ts</file>
         <file alias="lt">locale/bitcoin_lt.qm</file>
+        <file alias="lv_LV">locale/bitcoin_lv_LV.ts</file>
         <file alias="nb">locale/bitcoin_nb.qm</file>
         <file alias="nl">locale/bitcoin_nl.qm</file>
         <file alias="pl">locale/bitcoin_pl.qm</file>
@@ -83,6 +92,7 @@
         <file alias="sk">locale/bitcoin_sk.qm</file>
         <file alias="sr">locale/bitcoin_sr.qm</file>
         <file alias="sv">locale/bitcoin_sv.qm</file>
+        <file alias="th_TH">locale/bitcoin_th_TH.ts</file>
         <file alias="tr">locale/bitcoin_tr.qm</file>
         <file alias="uk">locale/bitcoin_uk.qm</file>
         <file alias="zh_CN">locale/bitcoin_zh_CN.qm</file>

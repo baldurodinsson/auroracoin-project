@@ -16,10 +16,10 @@
 #include <stdint.h>
 
 // Tests this internal-to-main.cpp method:
-extern bool AddOrphanTx(const CDataStream& vMsg);
+extern bool AddOrphanTx(const CTransaction& tx);
 extern unsigned int LimitOrphanTxSize(unsigned int nMaxOrphans);
-extern std::map<uint256, CDataStream*> mapOrphanTransactions;
-extern std::map<uint256, std::map<uint256, CDataStream*> > mapOrphanTransactionsByPrev;
+extern std::map<uint256, CTransaction> mapOrphanTransactions;
+extern std::map<uint256, std::set<uint256> > mapOrphanTransactionsByPrev;
 
 CService ip(uint32_t i)
 {
@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(DoS_banning)
     CNode dummyNode1(INVALID_SOCKET, addr1, "", true);
     dummyNode1.Misbehaving(100); // Should get banned
     BOOST_CHECK(CNode::IsBanned(addr1));
-    BOOST_CHECK(!CNode::IsBanned(ip(0xa0b0c001|0x0000ff00))); // Different ip, not banned
+    BOOST_CHECK(!CNode::IsBanned(ip(0xa0b0c001|0x0000ff00))); // Different IP, not banned
 
     CAddress addr2(ip(0xa0b0c002));
     CNode dummyNode2(INVALID_SOCKET, addr2, "", true);
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(DoS_banning)
     BOOST_CHECK(CNode::IsBanned(addr1));  // ... but 1 still should be
     dummyNode2.Misbehaving(50);
     BOOST_CHECK(CNode::IsBanned(addr2));
-}    
+}
 
 BOOST_AUTO_TEST_CASE(DoS_banscore)
 {
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(DoS_checknbits)
 {
     using namespace boost::assign; // for 'map_list_of()'
 
-    // Timestamps,nBits from the bitcoin blockchain.
+    // Timestamps,nBits from the bitcoin block chain.
     // These are the block-chain checkpoint blocks
     typedef std::map<int64, unsigned int> BlockData;
     BlockData chainData =
@@ -129,19 +129,15 @@ BOOST_AUTO_TEST_CASE(DoS_checknbits)
 
     // ... but OK if enough time passed for difficulty to adjust downward:
     BOOST_CHECK(CheckNBits(firstcheck.second, lastcheck.first+60*60*24*365*4, lastcheck.second, lastcheck.first));
-    
 }
 
 CTransaction RandomOrphan()
 {
-    std::map<uint256, CDataStream*>::iterator it;
+    std::map<uint256, CTransaction>::iterator it;
     it = mapOrphanTransactions.lower_bound(GetRandHash());
     if (it == mapOrphanTransactions.end())
         it = mapOrphanTransactions.begin();
-    const CDataStream* pvMsg = it->second;
-    CTransaction tx;
-    CDataStream(*pvMsg) >> tx;
-    return tx;
+    return it->second;
 }
 
 BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
@@ -163,9 +159,7 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
         tx.vout[0].nValue = 1*CENT;
         tx.vout[0].scriptPubKey.SetDestination(key.GetPubKey().GetID());
 
-        CDataStream ds(SER_DISK, CLIENT_VERSION);
-        ds << tx;
-        AddOrphanTx(ds);
+        AddOrphanTx(tx);
     }
 
     // ... and 50 that depend on other orphans:
@@ -182,9 +176,7 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
         tx.vout[0].scriptPubKey.SetDestination(key.GetPubKey().GetID());
         SignSignature(keystore, txPrev, tx, 0);
 
-        CDataStream ds(SER_DISK, CLIENT_VERSION);
-        ds << tx;
-        AddOrphanTx(ds);
+        AddOrphanTx(tx);
     }
 
     // This really-big orphan should be ignored:
@@ -208,9 +200,7 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
         for (unsigned int j = 1; j < tx.vin.size(); j++)
             tx.vin[j].scriptSig = tx.vin[0].scriptSig;
 
-        CDataStream ds(SER_DISK, CLIENT_VERSION);
-        ds << tx;
-        BOOST_CHECK(!AddOrphanTx(ds));
+        BOOST_CHECK(!AddOrphanTx(tx));
     }
 
     // Test LimitOrphanTxSize() function:
@@ -231,6 +221,7 @@ BOOST_AUTO_TEST_CASE(DoS_checkSig)
     key.MakeNewKey(true);
     CBasicKeyStore keystore;
     keystore.AddKey(key);
+    unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC;
 
     // 100 orphan transactions:
     static const int NPREV=100;
@@ -246,9 +237,7 @@ BOOST_AUTO_TEST_CASE(DoS_checkSig)
         tx.vout[0].nValue = 1*CENT;
         tx.vout[0].scriptPubKey.SetDestination(key.GetPubKey().GetID());
 
-        CDataStream ds(SER_DISK, CLIENT_VERSION);
-        ds << tx;
-        AddOrphanTx(ds);
+        AddOrphanTx(tx);
     }
 
     // Create a transaction that depends on orphans:
@@ -278,7 +267,7 @@ BOOST_AUTO_TEST_CASE(DoS_checkSig)
     mst1 = boost::posix_time::microsec_clock::local_time();
     for (unsigned int i = 0; i < 5; i++)
         for (unsigned int j = 0; j < tx.vin.size(); j++)
-            BOOST_CHECK(VerifySignature(orphans[j], tx, j, true, SIGHASH_ALL));
+            BOOST_CHECK(VerifySignature(CCoins(orphans[j], MEMPOOL_HEIGHT), tx, j, flags, SIGHASH_ALL));
     mst2 = boost::posix_time::microsec_clock::local_time();
     msdiff = mst2 - mst1;
     long nManyValidate = msdiff.total_milliseconds();
@@ -289,13 +278,13 @@ BOOST_AUTO_TEST_CASE(DoS_checkSig)
     // Empty a signature, validation should fail:
     CScript save = tx.vin[0].scriptSig;
     tx.vin[0].scriptSig = CScript();
-    BOOST_CHECK(!VerifySignature(orphans[0], tx, 0, true, SIGHASH_ALL));
+    BOOST_CHECK(!VerifySignature(CCoins(orphans[0], MEMPOOL_HEIGHT), tx, 0, flags, SIGHASH_ALL));
     tx.vin[0].scriptSig = save;
 
     // Swap signatures, validation should fail:
     std::swap(tx.vin[0].scriptSig, tx.vin[1].scriptSig);
-    BOOST_CHECK(!VerifySignature(orphans[0], tx, 0, true, SIGHASH_ALL));
-    BOOST_CHECK(!VerifySignature(orphans[1], tx, 1, true, SIGHASH_ALL));
+    BOOST_CHECK(!VerifySignature(CCoins(orphans[0], MEMPOOL_HEIGHT), tx, 0, flags, SIGHASH_ALL));
+    BOOST_CHECK(!VerifySignature(CCoins(orphans[1], MEMPOOL_HEIGHT), tx, 1, flags, SIGHASH_ALL));
     std::swap(tx.vin[0].scriptSig, tx.vin[1].scriptSig);
 
     // Exercise -maxsigcachesize code:
@@ -305,7 +294,7 @@ BOOST_AUTO_TEST_CASE(DoS_checkSig)
     BOOST_CHECK(SignSignature(keystore, orphans[0], tx, 0));
     BOOST_CHECK(tx.vin[0].scriptSig != oldSig);
     for (unsigned int j = 0; j < tx.vin.size(); j++)
-        BOOST_CHECK(VerifySignature(orphans[j], tx, j, true, SIGHASH_ALL));
+        BOOST_CHECK(VerifySignature(CCoins(orphans[j], MEMPOOL_HEIGHT), tx, j, flags, SIGHASH_ALL));
     mapArgs.erase("-maxsigcachesize");
 
     LimitOrphanTxSize(0);

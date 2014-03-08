@@ -23,7 +23,7 @@
       <enum>QTabWidget::North</enum>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tabMain">
       <attribute name="title">
@@ -33,7 +33,7 @@
        <item>
         <widget class="QLabel" name="transactionFeeInfoLabel">
          <property name="text">
-          <string>Optional transaction fee per kB that helps make sure your transactions are processed quickly. Most transactions are 1 kB. Fee 0.01 recommended.</string>
+          <string>Optional transaction fee per kB that helps make sure your transactions are processed quickly. Most transactions are 1 kB.</string>
          </property>
          <property name="textFormat">
           <enum>Qt::PlainText</enum>
@@ -44,7 +44,7 @@
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_Main">
+        <layout class="QHBoxLayout" name="horizontalLayout_1_Main">
          <item>
           <widget class="QLabel" name="transactionFeeLabel">
            <property name="text">
@@ -62,7 +62,7 @@
           <widget class="BitcoinAmountField" name="transactionFee"/>
          </item>
          <item>
-          <spacer name="horizontalSpacer_Main">
+          <spacer name="horizontalSpacer_1_Main">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
@@ -79,20 +79,10 @@
        <item>
         <widget class="QCheckBox" name="bitcoinAtStartup">
          <property name="toolTip">
-          <string>Automatically start AuroraCoin after logging in to the system.</string>
+          <string>Automatically start Auroracoin after logging in to the system.</string>
          </property>
          <property name="text">
-          <string>&amp;Start AuroraCoin on system login</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="detachDatabases">
-         <property name="toolTip">
-          <string>Detach block and address databases at shutdown. This means they can be moved to another data directory, but it slows down shutdown. The wallet is always detached.</string>
-         </property>
-         <property name="text">
-          <string>&amp;Detach databases at shutdown</string>
+          <string>&amp;Start Auroracoin on system login</string>
          </property>
         </widget>
        </item>
@@ -109,6 +99,36 @@
          </property>
         </spacer>
        </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2_Main">
+         <item>
+          <spacer name="horizontalSpacer_2_Main">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="resetButton">
+           <property name="toolTip">
+            <string>Reset all client options to default.</string>
+           </property>
+           <property name="text">
+            <string>&amp;Reset Options</string>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tabNetwork">
@@ -119,7 +139,7 @@
        <item>
         <widget class="QCheckBox" name="mapPortUpnp">
          <property name="toolTip">
-          <string>Automatically open the AuroraCoin client port on the router. This only works when your router supports UPnP and it is enabled.</string>
+          <string>Automatically open the Auroracoin client port on the router. This only works when your router supports UPnP and it is enabled.</string>
          </property>
          <property name="text">
           <string>Map port using &amp;UPnP</string>
@@ -129,7 +149,7 @@
        <item>
         <widget class="QCheckBox" name="connectSocks">
          <property name="toolTip">
-          <string>Connect to the AuroraCoin network through a SOCKS proxy (e.g. when connecting through Tor).</string>
+          <string>Connect to the Auroracoin network through a SOCKS proxy (e.g. when connecting through Tor).</string>
          </property>
          <property name="text">
           <string>&amp;Connect through SOCKS proxy:</string>
@@ -303,7 +323,7 @@
          <item>
           <widget class="QValueComboBox" name="lang">
            <property name="toolTip">
-            <string>The user interface language can be set here. This setting will take effect after restarting AuroraCoin.</string>
+            <string>The user interface language can be set here. This setting will take effect after restarting Auroracoin.</string>
            </property>
           </widget>
          </item>
@@ -336,10 +356,20 @@
        <item>
         <widget class="QCheckBox" name="displayAddresses">
          <property name="toolTip">
-          <string>Whether to show AuroraCoin addresses in the transaction list or not.</string>
+          <string>Whether to show Auroracoin addresses in the transaction list or not.</string>
          </property>
          <property name="text">
           <string>&amp;Display addresses in transaction list</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="coinControlFeatures">
+         <property name="toolTip">
+          <string>Whether to show coin control features or not.</string>
+         </property>
+         <property name="text">
+          <string>Display coin &amp;control features (experts only!)</string>
          </property>
         </widget>
        </item>
@@ -430,12 +460,6 @@
         <string>&amp;Apply</string>
        </property>
        <property name="autoDefault">
-        <bool>false</bool>
-       </property>
-       <property name="default">
-        <bool>false</bool>
-       </property>
-       <property name="flat">
         <bool>false</bool>
        </property>
       </widget>

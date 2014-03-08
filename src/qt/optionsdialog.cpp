@@ -1,26 +1,15 @@
 #include "optionsdialog.h"
 #include "ui_optionsdialog.h"
 
-#include "bitcoinamountfield.h"
 #include "bitcoinunits.h"
 #include "monitoreddatamapper.h"
 #include "netbase.h"
 #include "optionsmodel.h"
-#include "qvalidatedlineedit.h"
-#include "qvaluecombobox.h"
 
-#include <QCheckBox>
 #include <QDir>
 #include <QIntValidator>
-#include <QLabel>
-#include <QLineEdit>
 #include <QLocale>
 #include <QMessageBox>
-#include <QPushButton>
-#include <QRegExp>
-#include <QRegExpValidator>
-#include <QTabWidget>
-#include <QWidget>
 
 OptionsDialog::OptionsDialog(QWidget *parent) :
     QDialog(parent),
@@ -38,24 +27,26 @@ OptionsDialog::OptionsDialog(QWidget *parent) :
     ui->mapPortUpnp->setEnabled(false);
 #endif
 
+    ui->proxyIp->setEnabled(false);
+    ui->proxyPort->setEnabled(false);
+    ui->proxyPort->setValidator(new QIntValidator(1, 65535, this));
+
     ui->socksVersion->setEnabled(false);
     ui->socksVersion->addItem("5", 5);
     ui->socksVersion->addItem("4", 4);
     ui->socksVersion->setCurrentIndex(0);
 
-    ui->proxyIp->setEnabled(false);
-    ui->proxyPort->setEnabled(false);
-    ui->proxyPort->setValidator(new QIntValidator(0, 65535, this));
-
-    connect(ui->connectSocks, SIGNAL(toggled(bool)), ui->socksVersion, SLOT(setEnabled(bool)));
     connect(ui->connectSocks, SIGNAL(toggled(bool)), ui->proxyIp, SLOT(setEnabled(bool)));
     connect(ui->connectSocks, SIGNAL(toggled(bool)), ui->proxyPort, SLOT(setEnabled(bool)));
+    connect(ui->connectSocks, SIGNAL(toggled(bool)), ui->socksVersion, SLOT(setEnabled(bool)));
+    connect(ui->connectSocks, SIGNAL(clicked(bool)), this, SLOT(showRestartWarning_Proxy()));
 
     ui->proxyIp->installEventFilter(this);
 
     /* Window elements init */
-#ifdef Q_WS_MAC
-    ui->tabWindow->setVisible(false);
+#ifdef Q_OS_MAC
+    /* remove Window tab on Mac */
+    ui->tabWidget->removeTab(ui->tabWidget->indexOf(ui->tabWindow));
 #endif
 
     /* Display elements init */
@@ -90,20 +81,17 @@ OptionsDialog::OptionsDialog(QWidget *parent) :
 
     ui->unit->setModel(new BitcoinUnits(this));
 
-    connect(ui->connectSocks, SIGNAL(clicked(bool)), this, SLOT(showRestartWarning_Proxy()));
-    connect(ui->lang, SIGNAL(activated(int)), this, SLOT(showRestartWarning_Lang()));
-
     /* Widget-to-option mapper */
     mapper = new MonitoredDataMapper(this);
     mapper->setSubmitPolicy(QDataWidgetMapper::ManualSubmit);
     mapper->setOrientation(Qt::Vertical);
 
-    /* enable save buttons when data modified */
-    connect(mapper, SIGNAL(viewModified()), this, SLOT(enableSaveButtons()));
-    /* disable save buttons when new data loaded */
-    connect(mapper, SIGNAL(currentIndexChanged(int)), this, SLOT(disableSaveButtons()));
-    /* disable/enable save buttons when proxy IP is invalid/valid */
-    connect(this, SIGNAL(proxyIpValid(bool)), this, SLOT(setSaveButtonState(bool)));
+    /* enable apply button when data modified */
+    connect(mapper, SIGNAL(viewModified()), this, SLOT(enableApplyButton()));
+    /* disable apply button when new data loaded */
+    connect(mapper, SIGNAL(currentIndexChanged(int)), this, SLOT(disableApplyButton()));
+    /* setup/change UI elements when proxy IP is invalid/valid */
+    connect(this, SIGNAL(proxyIpValid(QValidatedLineEdit *, bool)), this, SLOT(handleProxyIpValid(QValidatedLineEdit *, bool)));
 }
 
 OptionsDialog::~OptionsDialog()
@@ -124,8 +112,14 @@ void OptionsDialog::setModel(OptionsModel *model)
         mapper->toFirst();
     }
 
-    // update the display unit, to not use the default ("BTC")
+    /* update the display unit, to not use the default ("BTC") */
     updateDisplayUnit();
+
+    /* warn only when language selection changes by user action (placed here so init via mapper doesn't trigger this) */
+    connect(ui->lang, SIGNAL(valueChanged()), this, SLOT(showRestartWarning_Lang()));
+
+    /* disable apply button after settings are loaded as there is nothing to save */
+    disableApplyButton();
 }
 
 void OptionsDialog::setMapper()
@@ -133,17 +127,17 @@ void OptionsDialog::setMapper()
     /* Main */
     mapper->addMapping(ui->transactionFee, OptionsModel::Fee);
     mapper->addMapping(ui->bitcoinAtStartup, OptionsModel::StartAtStartup);
-    mapper->addMapping(ui->detachDatabases, OptionsModel::DetachDatabases);
 
     /* Network */
     mapper->addMapping(ui->mapPortUpnp, OptionsModel::MapPortUPnP);
+
     mapper->addMapping(ui->connectSocks, OptionsModel::ProxyUse);
-    mapper->addMapping(ui->socksVersion, OptionsModel::ProxySocksVersion);
     mapper->addMapping(ui->proxyIp, OptionsModel::ProxyIP);
     mapper->addMapping(ui->proxyPort, OptionsModel::ProxyPort);
+    mapper->addMapping(ui->socksVersion, OptionsModel::ProxySocksVersion);
 
     /* Window */
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
     mapper->addMapping(ui->minimizeToTray, OptionsModel::MinimizeToTray);
     mapper->addMapping(ui->minimizeOnClose, OptionsModel::MinimizeOnClose);
 #endif
@@ -152,11 +146,22 @@ void OptionsDialog::setMapper()
     mapper->addMapping(ui->lang, OptionsModel::Language);
     mapper->addMapping(ui->unit, OptionsModel::DisplayUnit);
     mapper->addMapping(ui->displayAddresses, OptionsModel::DisplayAddresses);
+    mapper->addMapping(ui->coinControlFeatures, OptionsModel::CoinControlFeatures);
+}
+
+void OptionsDialog::enableApplyButton()
+{
+    ui->applyButton->setEnabled(true);
+}
+
+void OptionsDialog::disableApplyButton()
+{
+    ui->applyButton->setEnabled(false);
 }
 
 void OptionsDialog::enableSaveButtons()
 {
-    // prevent enabling of the save buttons when data modified, if there is an invalid proxy address present
+    /* prevent enabling of the save buttons when data modified, if there is an invalid proxy address present */
     if(fProxyIpValid)
         setSaveButtonState(true);
 }
@@ -170,6 +175,33 @@ void OptionsDialog::setSaveButtonState(bool fState)
 {
     ui->applyButton->setEnabled(fState);
     ui->okButton->setEnabled(fState);
+}
+
+void OptionsDialog::on_resetButton_clicked()
+{
+    if(model)
+    {
+        // confirmation dialog
+        QMessageBox::StandardButton btnRetVal = QMessageBox::question(this, tr("Confirm options reset"),
+            tr("Some settings may require a client restart to take effect.") + "<br><br>" + tr("Do you want to proceed?"),
+            QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
+
+        if(btnRetVal == QMessageBox::Cancel)
+            return;
+
+        disableApplyButton();
+
+        /* disable restart warning messages display */
+        fRestartWarningDisplayed_Lang = fRestartWarningDisplayed_Proxy = true;
+
+        /* reset all options and save the default values (QSettings) */
+        model->Reset();
+        mapper->toFirst();
+        mapper->submit();
+
+        /* re-enable restart warning messages display */
+        fRestartWarningDisplayed_Lang = fRestartWarningDisplayed_Proxy = false;
+    }
 }
 
 void OptionsDialog::on_okButton_clicked()
@@ -186,14 +218,14 @@ void OptionsDialog::on_cancelButton_clicked()
 void OptionsDialog::on_applyButton_clicked()
 {
     mapper->submit();
-    ui->applyButton->setEnabled(false);
+    disableApplyButton();
 }
 
 void OptionsDialog::showRestartWarning_Proxy()
 {
     if(!fRestartWarningDisplayed_Proxy)
     {
-        QMessageBox::warning(this, tr("Warning"), tr("This setting will take effect after restarting AuroraCoin."), QMessageBox::Ok);
+        QMessageBox::warning(this, tr("Warning"), tr("This setting will take effect after restarting Auroracoin."), QMessageBox::Ok);
         fRestartWarningDisplayed_Proxy = true;
     }
 }
@@ -202,7 +234,7 @@ void OptionsDialog::showRestartWarning_Lang()
 {
     if(!fRestartWarningDisplayed_Lang)
     {
-        QMessageBox::warning(this, tr("Warning"), tr("This setting will take effect after restarting AuroraCoin."), QMessageBox::Ok);
+        QMessageBox::warning(this, tr("Warning"), tr("This setting will take effect after restarting Auroracoin."), QMessageBox::Ok);
         fRestartWarningDisplayed_Lang = true;
     }
 }
@@ -211,30 +243,39 @@ void OptionsDialog::updateDisplayUnit()
 {
     if(model)
     {
-        // Update transactionFee with the current unit
+        /* Update transactionFee with the current unit */
         ui->transactionFee->setDisplayUnit(model->getDisplayUnit());
+    }
+}
+
+void OptionsDialog::handleProxyIpValid(QValidatedLineEdit *object, bool fState)
+{
+    // this is used in a check before re-enabling the save buttons
+    fProxyIpValid = fState;
+
+    if(fProxyIpValid)
+    {
+        enableSaveButtons();
+        ui->statusLabel->clear();
+    }
+    else
+    {
+        disableSaveButtons();
+        object->setValid(fProxyIpValid);
+        ui->statusLabel->setStyleSheet("QLabel { color: red; }");
+        ui->statusLabel->setText(tr("The supplied proxy address is invalid."));
     }
 }
 
 bool OptionsDialog::eventFilter(QObject *object, QEvent *event)
 {
-    if(object == ui->proxyIp && event->type() == QEvent::FocusOut)
+    if(event->type() == QEvent::FocusOut)
     {
-        // Check proxyIP for a valid IPv4/IPv6 address
-        CService addr;
-        if(!LookupNumeric(ui->proxyIp->text().toStdString().c_str(), addr))
+        if(object == ui->proxyIp)
         {
-            ui->proxyIp->setValid(false);
-            fProxyIpValid = false;
-            ui->statusLabel->setStyleSheet("QLabel { color: red; }");
-            ui->statusLabel->setText(tr("The supplied proxy address is invalid."));
-            emit proxyIpValid(false);
-        }
-        else
-        {
-            fProxyIpValid = true;
-            ui->statusLabel->clear();
-            emit proxyIpValid(true);
+            CService addr;
+            /* Check proxyIp for a valid IPv4/IPv6 address and emit the proxyIpValid signal */
+            emit proxyIpValid(ui->proxyIp, LookupNumeric(ui->proxyIp->text().toStdString().c_str(), addr));
         }
     }
     return QDialog::eventFilter(object, event);
