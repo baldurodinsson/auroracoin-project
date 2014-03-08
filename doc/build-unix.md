@@ -1,27 +1,23 @@
-Copyright (c) 2009-2012 Bitcoin Developers
-Copyright (c) 2011-2012 Litecoin Developers
+Copyright (c) 2009-2013 Bitcoin Developers
+
 Distributed under the MIT/X11 software license, see the accompanying
 file COPYING or http://www.opensource.org/licenses/mit-license.php.
-This product includes software developed by the OpenSSL Project for use in
-the OpenSSL Toolkit (http://www.openssl.org/).  This product includes
-cryptographic software written by Eric Young (eay@cryptsoft.com) and UPnP
-software written by Thomas Bernard.
-
+This product includes software developed by the OpenSSL Project for use in the [OpenSSL Toolkit](http://www.openssl.org/). This product includes
+cryptographic software written by Eric Young ([eay@cryptsoft.com](mailto:eay@cryptsoft.com)), and UPnP software written by Thomas Bernard.
 
 UNIX BUILD NOTES
-================
+====================
 
 To Build
---------
+---------------------
 
-cd src/
-make -f makefile.unix            # Headless litecoin
+	cd src/
+	make -f makefile.unix		# Headless auroracoin
 
-See readme-qt.rst for instructions on building Litecoin-Qt,
-the graphical user interface.
+See readme-qt.rst for instructions on building Auroracoin-Qt, the graphical user interface.
 
 Dependencies
-------------
+---------------------
 
  Library     Purpose           Description
  -------     -------           -----------
@@ -29,23 +25,18 @@ Dependencies
  libdb4.8    Berkeley DB       Blockchain & wallet storage
  libboost    Boost             C++ Library
  miniupnpc   UPnP Support      Optional firewall-jumping support
- libqrencode QRCode generation Optional QRCode generation
 
-miniupnpc may be used for UPnP port mapping.  It can be downloaded from
-http://miniupnp.tuxfamily.org/files/.  UPnP support is compiled in and
+[miniupnpc](http://miniupnp.free.fr/) may be used for UPnP port mapping.  It can be downloaded from [here](
+http://miniupnp.tuxfamily.org/files/).  UPnP support is compiled in and
 turned off by default.  Set USE_UPNP to a different value to control this:
- USE_UPNP=-    No UPnP support - miniupnp not required
- USE_UPNP=0    (the default) UPnP support turned off by default at runtime
- USE_UPNP=1    UPnP support turned on by default at runtime
 
-libqrencode may be used for QRCode image generation. It can be downloaded
-from http://fukuchi.org/works/qrencode/index.html.en, or installed via
-your package manager. Set USE_QRCODE to control this:
- USE_QRCODE=0   (the default) No QRCode support - libqrcode not required
- USE_QRCODE=1   QRCode support enabled
+	USE_UPNP=     No UPnP support miniupnp not required
+	USE_UPNP=0    (the default) UPnP support turned off by default at runtime
+	USE_UPNP=1    UPnP support turned on by default at runtime
 
-IPv6 support may be enabled by setting
- USE_IPV6=1    Enable IPv6 support
+IPv6 support may be disabled by setting:
+
+	USE_IPV6=0    Disable IPv6 support
 
 Licenses of statically linked libraries:
  Berkeley DB   New BSD license with additional requirement that linked
@@ -53,70 +44,76 @@ Licenses of statically linked libraries:
  Boost         MIT-like license
  miniupnpc     New (3-clause) BSD license
 
-Versions used in this release:
- GCC           4.3.3
- OpenSSL       0.9.8g
- Berkeley DB   4.8.30.NC
- Boost         1.37
- miniupnpc     1.6
+- Versions used in this release:
+-  GCC           4.3.3
+-  OpenSSL       1.0.1c
+-  Berkeley DB   4.8.30.NC
+-  Boost         1.37
+-  miniupnpc     1.6
 
 Dependency Build Instructions: Ubuntu & Debian
 ----------------------------------------------
-sudo apt-get install build-essential
-sudo apt-get install libssl-dev
-sudo apt-get install libdb4.8-dev
-sudo apt-get install libdb4.8++-dev
- Boost 1.40+: sudo apt-get install libboost-all-dev
- or Boost 1.37: sudo apt-get install libboost1.37-dev
-sudo apt-get install libqrencode-dev
+Build requirements:
 
-If using Boost 1.37, append -mt to the boost libraries in the makefile.
+	sudo apt-get install build-essential
+	sudo apt-get install libssl-dev
 
+for Ubuntu 12.04:
 
-Dependency Build Instructions: Gentoo
--------------------------------------
+	sudo apt-get install libboost-all-dev
 
-emerge -av1 --noreplace boost glib openssl sys-libs/db:4.8
+ db4.8 packages are available [here](https://launchpad.net/~bitcoin/+archive/bitcoin).
 
-Take the following steps to build (no UPnP support):
- cd ${LITECOIN_DIR}/src
- make -f makefile.unix USE_UPNP= USE_IPV6=1 BDB_INCLUDE_PATH='/usr/include/db4.8'
- strip litecoind
+ Ubuntu precise has packages for libdb5.1-dev and libdb5.1++-dev,
+ but using these will break binary wallet compatibility, and is not recommended.
+
+for other Ubuntu & Debian:
+
+	sudo apt-get install libdb4.8-dev
+	sudo apt-get install libdb4.8++-dev
+	sudo apt-get install libboost1.37-dev
+ (If using Boost 1.37, append -mt to the boost libraries in the makefile)
+
+Optional:
+
+	sudo apt-get install libminiupnpc-dev (see USE_UPNP compile flag)
 
 
 Notes
 -----
-The release is built with GCC and then "strip litecoind" to strip the debug
+The release is built with GCC and then "strip bitcoind" to strip the debug
 symbols, which reduces the executable size by about 90%.
 
 
 miniupnpc
 ---------
-tar -xzvf miniupnpc-1.6.tar.gz
-cd miniupnpc-1.6
-make
-sudo su
-make install
+	tar -xzvf miniupnpc-1.6.tar.gz
+	cd miniupnpc-1.6
+	make
+	sudo su
+	make install
 
 
 Berkeley DB
 -----------
 You need Berkeley DB 4.8.  If you have to build Berkeley DB yourself:
-../dist/configure --enable-cxx
-make
+
+	../dist/configure --enable-cxx
+	make
 
 
 Boost
 -----
 If you need to build Boost yourself:
-sudo su
-./bootstrap.sh
-./bjam install
+
+	sudo su
+	./bootstrap.sh
+	./bjam install
 
 
 Security
 --------
-To help make your litecoin installation more secure by making certain attacks impossible to
+To help make your auroracoin installation more secure by making certain attacks impossible to
 exploit even if a vulnerability is found, you can take the following measures:
 
 * Position Independent Executable
@@ -133,7 +130,8 @@ exploit even if a vulnerability is found, you can take the following measures:
     make -f makefile.unix ... -e PIE=1
 
     To test that you have built PIE executable, install scanelf, part of paxutils, and use:
-    scanelf -e ./litecoin
+
+    	scanelf -e ./auroracoin
 
     The output should contain:
      TYPE
@@ -141,16 +139,16 @@ exploit even if a vulnerability is found, you can take the following measures:
 
 * Non-executable Stack
     If the stack is executable then trivial stack based buffer overflow exploits are possible if
-    vulnerable buffers are found. By default, litecoin should be built with a non-executable stack
+    vulnerable buffers are found. By default, bitcoin should be built with a non-executable stack
     but if one of the libraries it uses asks for an executable stack or someone makes a mistake
     and uses a compiler extension which requires an executable stack, it will silently build an
     executable without the non-executable stack protection.
 
     To verify that the stack is non-executable after compiling use:
-    scanelf -e ./litecoin
+    `scanelf -e ./auroracoin`
 
     the output should contain:
-    STK/REL/PTL
-    RW- R-- RW-
+	STK/REL/PTL
+	RW- R-- RW-
 
     The STK RW- means that the stack is readable and writeable but not executable.

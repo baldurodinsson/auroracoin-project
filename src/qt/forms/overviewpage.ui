@@ -217,7 +217,7 @@
                <string>Your current total balance</string>
               </property>
               <property name="text">
-               <string notr="true">0 BTC</string>
+               <string notr="true">0 AUR</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
