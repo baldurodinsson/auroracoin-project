@@ -1142,7 +1142,8 @@ public:
         return true; // CheckProofOfWork(GetBlockHash(), nBits);
     }
 
-    enum { nMedianTimeSpan=11 };
+    // Auroracoin: limit timestamp window
+    enum { nKGWMedianTimeSpan=3, nMedianTimeSpan=11 };
 
     int64 GetMedianTimePast() const
     {
@@ -1151,7 +1152,8 @@ public:
         int64* pend = &pmedian[nMedianTimeSpan];
 
         const CBlockIndex* pindex = this;
-        for (int i = 0; i < nMedianTimeSpan && pindex; i++, pindex = pindex->pprev)
+        int span = ((pindex->nHeight > 5400) ? nKGWMedianTimeSpan : nMedianTimeSpan);
+        for (int i = 0; i < span && pindex; i++, pindex = pindex->pprev)
             *(--pbegin) = pindex->GetBlockTime();
 
         std::sort(pbegin, pend);
