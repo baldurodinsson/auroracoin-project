@@ -54,6 +54,7 @@ extern Value createrawtransaction(const Array& params, bool fHelp);
 extern Value decoderawtransaction(const Array& params, bool fHelp);
 extern Value signrawtransaction(const Array& params, bool fHelp);
 extern Value sendrawtransaction(const Array& params, bool fHelp);
+extern json_spirit::Value makekeypair(const json_spirit::Array& params, bool fHelp);
 
 const Object emptyobj;
 
@@ -2371,6 +2372,7 @@ static const CRPCCommand vRPCCommands[] =
     { "listsinceblock",         &listsinceblock,         false },
     { "dumpprivkey",            &dumpprivkey,            false },
     { "importprivkey",          &importprivkey,          false },
+    { "makekeypair",            &makekeypair,            true },
     { "listunspent",            &listunspent,            false },
     { "getrawtransaction",      &getrawtransaction,      false },
     { "createrawtransaction",   &createrawtransaction,   false },
