@@ -1,27 +1,6 @@
 // Copyright (c) 2012-2013 PPCoin developers
 // Copyright (c) 2013 Primecoin developers
 //
-// A perpetual use license of this advanced checkpoint technology is granted
-// to feathercoin by Sunny King on behalf of PPCoin developers and Primecoin
-// developers.
-//
-// Permission is hereby granted to any person obtaining a copy of the advanced
-// checkpoint technology, for perpetual use in feathercoin network, including
-// the rights to use, copy, modify, merge, publish, distribute, subject to the
-// following conditions:
-//
-// a) This license is not transferrable, no sublicense, and applies to
-//    feathercoin only.
-// b) The above copyright notice and this permission notice shall be included
-//    in all copies of source code distributions.
-//
-// Feathercoin is waived from displaying the above copyright notice in
-// 'About' for the inclusion of advanced checkpoint technology. Reference
-// in file 'COPYING' is appreciated but not required.
-//
-//
-// ****************************************************************************
-//
 // Introduction
 //
 // The synchronized checkpoint system is first developed by Sunny King for
