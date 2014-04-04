@@ -202,6 +202,7 @@ public:
     std::set<CAddress> setAddrKnown;
     bool fGetAddr;
     std::set<uint256> setKnown;
+	uint256 hashCheckpointKnown; // known sent sync-checkpoint
 
     // inventory based relay
     mruset<CInv> setInventoryKnown;
@@ -237,6 +238,7 @@ public:
         nStartingHeight = -1;
         fGetAddr = false;
         nMisbehavior = 0;
+		hashCheckpointKnown = 0;
         setInventoryKnown.max_size(SendBufferSize() / 1000);
 
         // Be shy and don't send version until we hear
