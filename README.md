@@ -38,8 +38,8 @@ Interested in helping out? Please email auroracoin@auroracoin.org with the subje
 - RPC: 12341
 - NET: 12340
 - Total coins: 21 million
-- 25 coins per block
-- Block every 10 minutes
-- Retarget every 8 blocks
+- 12.5 coins per block
+- Block every 5 minutes
+- Gravity Well retargeting
 - Coins mature after 100 blocks
 
